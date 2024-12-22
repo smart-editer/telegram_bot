@@ -3,264 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Bot Auto Reply with Buttons</title>
+    <title>Telegram Bot Interface</title>
     <style>
-      body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-}
-
-.container {
-    max-width: 600px;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-}
-
-h2 {
-    text-align: center;
-}
-
-#log {
-    max-height: 300px;
-    overflow-y: auto;
-    margin-top: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #e9ecef;
-    font-size: 14px;
-}
-
-.inline-buttons {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;  /* Left align the buttons */
-}
-
-.centered-button {
-    text-align: center; /* Center the top received button */
-}
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+        #log {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Telegram Bot Auto Reply</h2>
-        <div id="log">Waiting for messages...</div>
-    </div>
+
+    <h1>Telegram Bot Interface</h1>
+    <p>Interact with our Telegram bot below:</p>
+
+    <div id="log"></div> <!-- This will display log messages -->
 
     <script>
-      const botToken = '7023965174:AAEuimjpUSJ2F2VR67836fcmPL8F8II0inU';
-const apiUrl = `https://api.telegram.org/bot${botToken}`;
-const logDiv = document.getElementById('log');
-let lastUpdateId = 0;
+        const botToken = '7023965174:AAEuimjpUSJ2F2VR67836fcmPL8F8II0inU';
+        const apiUrl = `https://api.telegram.org/bot${botToken}`;
+        const logDiv = document.getElementById('log');
+        let lastUpdateId = 0;
 
-// Function to log messages
-function logMessage(text) {
-    const logEntry = document.createElement('div');
-    logEntry.textContent = text;
-    logDiv.appendChild(logEntry);
-    logDiv.scrollTop = logDiv.scrollHeight;
-}
-
-// Function to send a message with inline keyboard
-function sendContactButtons(chatId) {
-    const contactButtons = {
-        inline_keyboard: [
-            [{ text: 'Facebook', callback_data: 'facebook' }],
-            [{ text: 'Instagram', callback_data: 'instagram' }],
-            [{ text: 'Twitter', callback_data: 'twitter' }],
-            [{ text: 'YouTube', callback_data: 'youtube' }],
-            [{ text: 'Website', callback_data: 'website' }]
-        ]
-    };
-
-    fetch(`${apiUrl}/sendMessage`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: 'Click a button to get more details:',
-            reply_markup: contactButtons,
-        }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.ok) {
-            logMessage('Sent contact buttons successfully');
-            setMessageAutoDelete(data.result.message_id, chatId);
-        } else {
-            logMessage('Error sending contact buttons');
+        // Function to log messages
+        function logMessage(text) {
+            const logEntry = document.createElement('div');
+            logEntry.textContent = text;
+            logEntry.classList.add('log-entry');
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
         }
-    })
-    .catch(error => console.error('Error:', error));
-}
 
-// Function to handle callback queries
-function handleCallbackQuery(callbackQuery) {
-    const chatId = callbackQuery.message.chat.id;
-    const callbackData = callbackQuery.data;
-    const messageId = callbackQuery.message.message_id;
+        // Function to send a message with inline keyboard
+        function sendContactButtons(chatId) {
+            const contactButtons = {
+                inline_keyboard: [
+                    [{ text: 'Facebook', callback_data: 'facebook' }],
+                    [{ text: 'Instagram', callback_data: 'instagram' }],
+                    [{ text: 'Twitter', callback_data: 'twitter' }],
+                    [{ text: 'YouTube', callback_data: 'youtube' }],
+                    [{ text: 'Website', callback_data: 'website' }]
+                ]
+            };
 
-    let responseText = '';
-    let imageUrl = '';
-    let linkUrl = '';
-
-    switch (callbackData) {
-        case 'facebook':
-            responseText = 'Facebook: Stay connected with us on Facebook!';
-            imageUrl = 'https://via.placeholder.com/300x150?text=Facebook';
-            linkUrl = 'https://facebook.com';
-            break;
-        case 'instagram':
-            responseText = 'Instagram: Follow our journey on Instagram!';
-            imageUrl = 'https://via.placeholder.com/300x150?text=Instagram';
-            linkUrl = 'https://instagram.com';
-            break;
-        case 'twitter':
-            responseText = 'Twitter: Join the conversation on Twitter!';
-            imageUrl = 'https://via.placeholder.com/300x150?text=Twitter';
-            linkUrl = 'https://twitter.com';
-            break;
-        case 'youtube':
-            responseText = 'YouTube: Watch our videos on YouTube!';
-            imageUrl = 'https://via.placeholder.com/300x150?text=YouTube';
-            linkUrl = 'https://youtube.com';
-            break;
-        case 'website':
-            responseText = 'Website: Learn more on our website!';
-            imageUrl = 'https://via.placeholder.com/300x150?text=Website';
-            linkUrl = 'https://example.com';
-            break;
-        default:
-            responseText = 'Invalid selection.';
-            break;
-    }
-
-    if (responseText && imageUrl && linkUrl) {
-        sendMessage(chatId, `${responseText}\n[Visit Here](${linkUrl})`);
-        sendImage(chatId, imageUrl);
-    }
-
-    deleteMessage(chatId, messageId);
-
-    fetch(`${apiUrl}/answerCallbackQuery`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            callback_query_id: callbackQuery.id,
-            text: 'Processing your request...',
-        }),
-    })
-    .catch(error => console.error('Error answering callback query:', error));
-}
-
-// Function to clear chat history
-function clearChat(chatId) {
-    fetch(`${apiUrl}/getUpdates?chat_id=${chatId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok && data.result.length > 0) {
-                data.result.forEach(update => {
-                    const messageId = update.message?.message_id;
-                    if (messageId) {
-                        deleteMessage(chatId, messageId);
-                    }
-                });
-            }
-        })
-        .catch(error => console.error('Error fetching chat history:', error));
-}
-
-// Function to handle incoming messages
-function handleIncomingMessage(message) {
-    const chatId = message.chat.id;
-    const text = message.text;
-    const username = message.from.username || message.from.first_name || 'User';
-
-    logMessage(`Received: "${text}" from ${username}`);
-
-    if (text.toLowerCase() === '/start') {
-        clearChat(chatId); // Clear chat history
-        sendMessage(
-            chatId,
-            `Welcome to our bot, ${username}! 👋\n\nUse the following commands to interact:\n\n- Type *Contact Us* or */help* to get our contact buttons.\n- Enjoy using our bot!`
-        );
-    } else if (text.toLowerCase() === 'contact us' || text.toLowerCase() === '/help') {
-        sendContactButtons(chatId);
-    } else {
-        sendMessage(chatId, `Hello, ! How can I assist you today?`);
-    }
-}
-
-// Function to send a message
-function sendMessage(chatId, text) {
-    fetch(`${apiUrl}/sendMessage`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: text,
-            parse_mode: 'Markdown',
-        }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.ok) {
-            setMessageAutoDelete(data.result.message_id, chatId);
+            fetch(`${apiUrl}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: 'Click a button to get more details:',
+                    reply_markup: contactButtons,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    logMessage('Sent contact buttons successfully');
+                    setMessageAutoDelete(data.result.message_id, chatId);
+                } else {
+                    logMessage('Error sending contact buttons');
+                }
+            })
+            .catch(error => console.error('Error sending contact buttons:', error));
         }
-    })
-    .catch(error => console.error('Error:', error));
-}
 
-// Function to delete a specific message
-function deleteMessage(chatId, messageId) {
-    fetch(`${apiUrl}/deleteMessage`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            chat_id: chatId,
-            message_id: messageId,
-        }),
-    })
-    .catch(error => console.error('Error deleting message:', error));
-}
+        // Function to handle callback queries
+        function handleCallbackQuery(callbackQuery) {
+            const chatId = callbackQuery.message.chat.id;
+            const callbackData = callbackQuery.data;
+            const messageId = callbackQuery.message.message_id;
 
-// Function to poll updates from Telegram
-function pollUpdates() {
-    fetch(`${apiUrl}/getUpdates?offset=${lastUpdateId + 1}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok && data.result.length > 0) {
-                data.result.forEach(update => {
-                    lastUpdateId = update.update_id;
+            let responseText = '';
+            let imageUrl = '';
+            let linkUrl = '';
 
-                    if (update.message) {
-                        handleIncomingMessage(update.message);
-                    } else if (update.callback_query) {
-                        handleCallbackQuery(update.callback_query);
-                    }
-                });
+            switch (callbackData) {
+                case 'facebook':
+                    responseText = 'Facebook: Stay connected with us on Facebook!';
+                    imageUrl = 'https://via.placeholder.com/300x150?text=Facebook';
+                    linkUrl = 'https://facebook.com';
+                    break;
+                case 'instagram':
+                    responseText = 'Instagram: Follow our journey on Instagram!';
+                    imageUrl = 'https://via.placeholder.com/300x150?text=Instagram';
+                    linkUrl = 'https://instagram.com';
+                    break;
+                case 'twitter':
+                    responseText = 'Twitter: Join the conversation on Twitter!';
+                    imageUrl = 'https://via.placeholder.com/300x150?text=Twitter';
+                    linkUrl = 'https://twitter.com';
+                    break;
+                case 'youtube':
+                    responseText = 'YouTube: Watch our videos on YouTube!';
+                    imageUrl = 'https://via.placeholder.com/300x150?text=YouTube';
+                    linkUrl = 'https://youtube.com';
+                    break;
+                case 'website':
+                    responseText = 'Website: Learn more on our website!';
+                    imageUrl = 'https://via.placeholder.com/300x150?text=Website';
+                    linkUrl = 'https://example.com';
+                    break;
+                default:
+                    responseText = 'Invalid selection.';
+                    break;
             }
-        })
-        .catch(error => console.error('Error:', error))
-        .finally(() => {
-            setTimeout(pollUpdates, 1000);
-        });
-}
 
-// Start polling updates
-pollUpdates();
+            if (responseText && imageUrl && linkUrl) {
+                sendMessage(chatId, `${responseText}\n[Visit Here](${linkUrl})`);
+                sendImage(chatId, imageUrl);
+            }
+
+            deleteMessage(chatId, messageId);
+
+            fetch(`${apiUrl}/answerCallbackQuery`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    callback_query_id: callbackQuery.id,
+                    text: 'Processing your request...',
+                }),
+            })
+            .catch(error => console.error('Error answering callback query:', error));
+        }
+
+        // Function to clear chat history
+        function clearChat(chatId) {
+            fetch(`${apiUrl}/getUpdates?chat_id=${chatId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok && data.result.length > 0) {
+                        data.result.forEach(update => {
+                            const messageId = update.message?.message_id;
+                            if (messageId) {
+                                deleteMessage(chatId, messageId);
+                            }
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching chat history:', error));
+        }
+
+        // Function to handle incoming messages
+        function handleIncomingMessage(message) {
+            const chatId = message.chat.id;
+            const text = message.text;
+            const username = message.from.username || message.from.first_name || 'User';
+
+            logMessage(`Received: "${text}" from ${username}`);
+
+            if (text.toLowerCase() === '/start') {
+                clearChat(chatId); // Clear chat history
+                sendMessage(
+                    chatId,
+                    `Welcome to our bot, ${username}! 👋\n\nUse the following commands to interact:\n\n- Type *Contact Us* or */help* to get our contact buttons.\n- Enjoy using our bot!`
+                );
+            } else if (text.toLowerCase() === 'contact us' || text.toLowerCase() === '/help') {
+                sendContactButtons(chatId);
+            } else {
+                sendMessage(chatId, `Hello, ${username}! How can I assist you today?`);
+            }
+        }
+
+        // Function to send a message
+        function sendMessage(chatId, text) {
+            fetch(`${apiUrl}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: text,
+                    parse_mode: 'Markdown',
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    setMessageAutoDelete(data.result.message_id, chatId);
+                }
+            })
+            .catch(error => console.error('Error sending message:', error));
+        }
+
+        // Function to send an image
+        function sendImage(chatId, imageUrl) {
+            fetch(`${apiUrl}/sendPhoto`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    photo: imageUrl,
+                }),
+            })
+            .catch(error => console.error('Error sending image:', error));
+        }
+
+        // Function to delete a specific message
+        function deleteMessage(chatId, messageId) {
+            fetch(`${apiUrl}/deleteMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    message_id: messageId,
+                }),
+            })
+            .catch(error => console.error('Error deleting message:', error));
+        }
+
+        // Function to set auto-delete for messages after a certain period
+        function setMessageAutoDelete(messageId, chatId) {
+            setTimeout(() => {
+                deleteMessage(chatId, messageId);
+            }, 10000); // 10 seconds delay
+        }
+
+        // Function to poll updates from Telegram
+        function pollUpdates() {
+            fetch(`${apiUrl}/getUpdates?offset=${lastUpdateId + 1}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok && data.result.length > 0) {
+                        data.result.forEach(update => {
+                            lastUpdateId = update.update_id;
+
+                            if (update.message) {
+                                handleIncomingMessage(update.message);
+                            } else if (update.callback_query) {
+                                handleCallbackQuery(update.callback_query);
+                            }
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching updates:', error))
+                .finally(() => {
+                    setTimeout(pollUpdates, 1000); // Recurse every 1 second
+                });
+        }
+
+        // Start polling updates (running in the background)
+        pollUpdates();
     </script>
+
 </body>
 </html>
