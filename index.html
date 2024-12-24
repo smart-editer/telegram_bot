@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Bot Interface</title>
+    <title>Telegram Movie Download Bot</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,17 +26,32 @@
     </style>
 </head>
 <body>
-
-    <h1>Telegram Bot Interface</h1>
-    <p>Interact with our Telegram bot below:</p>
-
-    <div id="log"></div> <!-- This will display log messages -->
+    <h1>Telegram Movie Download Bot</h1>
+    <p>Interact with the bot by sending movie names to get download links!</p>
+    <div id="log"></div>
 
     <script>
-        const botToken = '7023965174:AAEuimjpUSJ2F2VR67836fcmPL8F8II0inU';
+        const botToken = '7218009166:AAEkzuFK_iPYNtbpYTkSGRu3yA4w7J_1-kI';
         const apiUrl = `https://api.telegram.org/bot${botToken}`;
         const logDiv = document.getElementById('log');
         let lastUpdateId = 0;
+
+        // Movies data
+        const movies = [
+            {
+                name: 'Pushpa 2 - The Rule',
+                image: 'https://pix1.wapkizfile.info/download/7c4810636cbe066c9901078043332dee/filmy4wap+wapkiz+com/Pushpa-2-The-Rule-2024-South-Hindi-Dubbed-Movie-HDRip-(filmyfly.earth).jpg',
+                downloadLinks: {
+                    '144p': 'https://example.com/download/Pushpa2-144p.mp4',
+                    '280p': 'https://example.com/download/Pushpa2-280p.mp4',
+                    '480p': 'https://example.com/download/Pushpa2-480p.mp4',
+                    '720p': 'https://example.com/download/Pushpa2-720p.mp4',
+                    '1080p': 'https://example.com/download/Pushpa2-1080p.mp4',
+                    '2k': 'https://example.com/download/Pushpa2-2k.mp4',
+                },
+            },
+            // Add more movies as needed
+        ];
 
         // Function to log messages
         function logMessage(text) {
@@ -46,178 +62,45 @@
             logDiv.scrollTop = logDiv.scrollHeight;
         }
 
-        // Function to send a message with inline keyboard
-        function sendContactButtons(chatId) {
-            const contactButtons = {
-                inline_keyboard: [
-                    [{ text: 'Facebook', callback_data: 'facebook' }],
-                    [{ text: 'Instagram', callback_data: 'instagram' }],
-                    [{ text: 'Twitter', callback_data: 'twitter' }],
-                    [{ text: 'YouTube', callback_data: 'youtube' }],
-                    [{ text: 'Website', callback_data: 'website' }]
-                ]
-            };
-
-            fetch(`${apiUrl}/sendMessage`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: 'Click a button to get more details:',
-                    reply_markup: contactButtons,
-                }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    logMessage('Sent contact buttons successfully');
-                    setMessageAutoDelete(data.result.message_id, chatId);
-                } else {
-                    logMessage('Error sending contact buttons');
-                }
-            })
-            .catch(error => console.error('Error sending contact buttons:', error));
-        }
-
-        // Function to handle callback queries
-        function handleCallbackQuery(callbackQuery) {
-            const chatId = callbackQuery.message.chat.id;
-            const callbackData = callbackQuery.data;
-            const messageId = callbackQuery.message.message_id;
-
-            let responseText = '';
-            let imageUrl = '';
-            let linkUrl = '';
-
-            switch (callbackData) {
-                case 'facebook':
-                    responseText = 'Facebook: Stay connected with us on Facebook!';
-                    imageUrl = 'https://via.placeholder.com/300x150?text=Facebook';
-                    linkUrl = 'https://facebook.com';
-                    break;
-                case 'instagram':
-                    responseText = 'Instagram: Follow our journey on Instagram!';
-                    imageUrl = 'https://via.placeholder.com/300x150?text=Instagram';
-                    linkUrl = 'https://instagram.com';
-                    break;
-                case 'twitter':
-                    responseText = 'Twitter: Join the conversation on Twitter!';
-                    imageUrl = 'https://via.placeholder.com/300x150?text=Twitter';
-                    linkUrl = 'https://twitter.com';
-                    break;
-                case 'youtube':
-                    responseText = 'YouTube: Watch our videos on YouTube!';
-                    imageUrl = 'https://via.placeholder.com/300x150?text=YouTube';
-                    linkUrl = 'https://youtube.com';
-                    break;
-                case 'website':
-                    responseText = 'Website: Learn more on our website!';
-                    imageUrl = 'https://via.placeholder.com/300x150?text=Website';
-                    linkUrl = 'https://example.com';
-                    break;
-                default:
-                    responseText = 'Invalid selection.';
-                    break;
-            }
-
-            if (responseText && imageUrl && linkUrl) {
-                sendMessage(chatId, `${responseText}\n[Visit Here](${linkUrl})`);
-                sendImage(chatId, imageUrl);
-            }
-
-            deleteMessage(chatId, messageId);
-
-            fetch(`${apiUrl}/answerCallbackQuery`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    callback_query_id: callbackQuery.id,
-                    text: 'Processing your request...',
-                }),
-            })
-            .catch(error => console.error('Error answering callback query:', error));
-        }
-
-        // Function to clear chat history
-        function clearChat(chatId) {
-            fetch(`${apiUrl}/getUpdates?chat_id=${chatId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.ok && data.result.length > 0) {
-                        data.result.forEach(update => {
-                            const messageId = update.message?.message_id;
-                            if (messageId) {
-                                deleteMessage(chatId, messageId);
-                            }
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching chat history:', error));
-        }
-
-        // Function to handle incoming messages
-        function handleIncomingMessage(message) {
-            const chatId = message.chat.id;
-            const text = message.text;
-            const username = message.from.username || message.from.first_name || 'User';
-
-            logMessage(`Received: "${text}" from ${username}`);
-
-            if (text.toLowerCase() === '/start') {
-                clearChat(chatId); // Clear chat history
-                sendMessage(
-                    chatId,
-                    `Welcome to our bot, ${username}! 👋\n\nUse the following commands to interact:\n\n- Type *Contact Us* or */help* to get our contact buttons.\n- Enjoy using our bot!`
-                );
-            } else if (text.toLowerCase() === 'contact us' || text.toLowerCase() === '/help') {
-                sendContactButtons(chatId);
-            } else {
-                sendMessage(chatId, `Hello, ${username}! How can I assist you today?`);
-            }
+        // Function to search for movies by splitting the name into parts
+        function searchMoviesByName(query) {
+            const queryParts = query.toLowerCase().split(' '); // Split by space or any other separator as needed
+            return movies.filter(movie => {
+                return queryParts.every(part => movie.name.toLowerCase().includes(part));
+            });
         }
 
         // Function to send a message
-        function sendMessage(chatId, text) {
+        function sendMessage(chatId, text, replyMarkup = null) {
+            const payload = {
+                chat_id: chatId,
+                text: text,
+                parse_mode: 'Markdown',
+            };
+            if (replyMarkup) {
+                payload.reply_markup = replyMarkup;
+            }
+
             fetch(`${apiUrl}/sendMessage`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: text,
-                    parse_mode: 'Markdown',
-                }),
+                body: JSON.stringify(payload),
             })
             .then(response => response.json())
             .then(data => {
-                if (data.ok) {
-                    setMessageAutoDelete(data.result.message_id, chatId);
+                if (data.ok && data.result && data.result.message_id) {
+                    // Set a timeout to delete the message after 5 minutes (300 seconds)
+                    setTimeout(() => {
+                        deleteMessage(chatId, data.result.message_id);
+                    }, 300000); // 300000ms = 5 minutes
                 }
             })
             .catch(error => console.error('Error sending message:', error));
         }
 
-        // Function to send an image
-        function sendImage(chatId, imageUrl) {
-            fetch(`${apiUrl}/sendPhoto`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    photo: imageUrl,
-                }),
-            })
-            .catch(error => console.error('Error sending image:', error));
-        }
-
-        // Function to delete a specific message
+        // Function to delete a message
         function deleteMessage(chatId, messageId) {
             fetch(`${apiUrl}/deleteMessage`, {
                 method: 'POST',
@@ -229,14 +112,125 @@
                     message_id: messageId,
                 }),
             })
+            .then(response => response.json())
             .catch(error => console.error('Error deleting message:', error));
         }
 
-        // Function to set auto-delete for messages after a certain period
-        function setMessageAutoDelete(messageId, chatId) {
-            setTimeout(() => {
-                deleteMessage(chatId, messageId);
-            }, 10000); // 10 seconds delay
+        // Function to handle callback data (quality selection)
+        function handleCallbackQuery(callbackQuery) {
+            const chatId = callbackQuery.message.chat.id;
+            const callbackData = callbackQuery.data; // e.g., '1080p_Pushpa 2 - The Rule'
+            const [quality, movieName] = callbackData.split('_'); // Split to get the quality and movie name
+            const movie = movies.find(movie => movie.name === movieName); // Get the movie object from the data
+
+            if (movie && movie.downloadLinks[quality]) {
+                const downloadLink = movie.downloadLinks[quality]; // Get the corresponding download link for the quality
+                const message = `Here is the ${quality} download link for ${movieName}:\n${downloadLink}`; // Prepare the message with the link
+                sendMessage(chatId, message); // Send the message to the user
+            } else {
+                sendMessage(chatId, `Sorry, the ${quality} version of ${movieName} is not available.`); // Handle case if the quality doesn't exist
+            }
+        }
+
+        // Function to handle incoming messages
+        function handleIncomingMessage(message) {
+            const chatId = message.chat.id;
+            const text = message.text;
+            const username = message.from.username || message.from.first_name || 'User';
+
+            logMessage(`Received: "${text}" from ${username}`);
+
+            if (text.toLowerCase() === '/start') {
+                const welcomeMessage = `
+Hey 👋 @${username}🤩
+
+🍿 Welcome to the World's Coolest Search Engine!
+
+Here you can request movies or web series. Just send their name with proper Google spelling.
+                `;
+
+                const welcomeButtons = {
+                    inline_keyboard: [
+                        [{ text: 'Bot Updates Channel', url: 'https://t.me/dubbedcollectionhd' }],
+                        [{ text: 'Share Bot', url: 'https://t.me/share/url?url=https://t.me/Crunchiroll_clone_bot' }],
+                    ],
+                };
+
+                fetch(`${apiUrl}/sendPhoto`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        photo: 'https://pix1.wapkizfile.info/download/7c4810636cbe066c9901078043332dee/filmy4wap+wapkiz+com/Pushpa-2-The-Rule-2024-South-Hindi-Dubbed-Movie-HDRip-(filmyfly.earth).jpg',
+                        caption: welcomeMessage,
+                        reply_markup: welcomeButtons,
+                    }),
+                })
+                .then(response => response.json())
+                .catch(error => console.error('Error sending welcome image:', error));
+
+            } else if (text.toLowerCase() === '/help') {
+                const helpMessage = `
+Need assistance? Choose your preferred platform below to connect with us or get support!
+                `;
+
+                const helpButtons = {
+                    inline_keyboard: [
+                        [{ text: 'Instagram', url: 'https://www.instagram.com/' }],
+                        [{ text: 'Facebook', url: 'https://www.facebook.com/' }],
+                        [{ text: 'Twitter', url: 'https://twitter.com/' }],
+                        [{ text: 'LinkedIn', url: 'https://www.linkedin.com/' }],
+                        [{ text: 'YouTube', url: 'https://www.youtube.com/' }],
+                    ],
+                };
+
+                sendMessage(chatId, helpMessage, helpButtons);
+
+            } else {
+                const searchResults = searchMoviesByName(text);
+
+                if (searchResults.length > 0) {
+                    searchResults.forEach(movie => {
+                        const qualityButtons = {
+                            inline_keyboard: [
+                                [{ text: '144p', callback_data: `144p_${movie.name}` }],
+                                [{ text: '280p', callback_data: `280p_${movie.name}` }],
+                                [{ text: '480p', callback_data: `480p_${movie.name}` }],
+                                [{ text: '720p', callback_data: `720p_${movie.name}` }],
+                                [{ text: '1080p', callback_data: `1080p_${movie.name}` }],
+                                [{ text: '2k', callback_data: `2k_${movie.name}` }],
+                            ],
+                        };
+
+                        fetch(`${apiUrl}/sendPhoto`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                photo: movie.image,
+                                caption: `Choose the quality for movie: ${movie.name}`,
+                                reply_markup: qualityButtons,
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.ok && data.result && data.result.message_id) {
+                                // Set a timeout to delete the message after 5 minutes (300 seconds)
+                                setTimeout(() => {
+                                    deleteMessage(chatId, data.result.message_id);
+                                }, 300000); // 300000ms = 5 minutes
+                            }
+                        })
+                        .catch(error => console.error('Error sending movie details:', error));
+                    });
+                } else {
+                    sendMessage(chatId, `Sorry, no movies found for "${text}".`);
+                }
+            }
         }
 
         // Function to poll updates from Telegram
@@ -250,7 +244,9 @@
 
                             if (update.message) {
                                 handleIncomingMessage(update.message);
-                            } else if (update.callback_query) {
+                            }
+
+                            if (update.callback_query) {
                                 handleCallbackQuery(update.callback_query);
                             }
                         });
@@ -258,13 +254,12 @@
                 })
                 .catch(error => console.error('Error fetching updates:', error))
                 .finally(() => {
-                    setTimeout(pollUpdates, 1000); // Recurse every 1 second
+                    setTimeout(pollUpdates, 1000); // Poll every 1 second
                 });
         }
 
-        // Start polling updates (running in the background)
+        // Start polling updates
         pollUpdates();
     </script>
-
 </body>
 </html>
